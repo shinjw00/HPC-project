@@ -164,12 +164,12 @@ action_dim = env.observation_space.shape[0]
 max_action = float(env.action_space.high[0])
 alpha = 0.0005
 beta = 0.0005
+iterations = 1000
 
 policy = SAC(state_dim, action_dim, max_action, alpha, beta)
 
 replay_buffer = ReplayBuffer()
 
-iterations = 10000
 batch_size = 64
 alpha_1 = 0.2 
 discount_factor = 0.99 
@@ -181,6 +181,7 @@ episode_num = 0
 episode_reward = 0
 episode_timesteps = 0
 start_timesteps = 1000
+total_timesteps = 10000
 done = True
 
 # for t in range(iterations):
@@ -200,7 +201,7 @@ done = True
 #     obs = new_obs
 #     env.render()
     
-for t in range(iterations):
+for t in range(total_timesteps):
     if done:
         if t != 0:
             print(f"Total T: {t} Episode Num: {episode_num} Episode T: {episode_timesteps} Reward: {episode_reward}")
@@ -209,8 +210,8 @@ for t in range(iterations):
         # Evaluate the policy
         if timesteps_since_eval >= start_timesteps:
             timesteps_since_eval %= start_timesteps
-            evaluations = evaluate_policy(policy)
-            print(f"Evaluation over {start_timesteps} episodes: {evaluations}")
+            evaluations = evaluate_policy(policy, eval_episodes)
+            print(f"Evaluation over {eval_episodes} episodes: {evaluations}")
         
         # Reset environment
         obs = env.reset()

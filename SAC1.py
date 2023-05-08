@@ -257,4 +257,5 @@ for t in range(total_timesteps):
     episode_reward += reward
     episode_timesteps += 1
     timesteps_since_eval += 1
-    
+    env.render()
+print("Training finished.")

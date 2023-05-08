@@ -80,6 +80,7 @@ class Critic(nn.Module):
   def forward(self, x, u):    # x는 input state, u는 action plate
     xu = torch.cat([x, u], 1)  # axis = 1 vertical, axis = 0 horizontal
     # Forward-propagation on the first Critic neural network
+    print(xu.shape)
     x1 = F.relu(self.layer_1(xu))
     x1 = F.relu(self.layer_2(x1))
     x1 = self.layer_3(x1) 
@@ -183,60 +184,77 @@ episode_timesteps = 0
 start_timesteps = 1000
 total_timesteps = 10000
 done = True
-
-# for t in range(iterations):
-#     obs = env.reset()
-#     done = False
-#     episode_timesteps = 0
-#     while not done:
-#         action = policy.select_action(obs)
-#         new_obs, reward, done, _, _ = env.step(action)
-#         done_bool = 0 if episode_timesteps + 1 == env._max_episode_steps else float(done)
-#         replay_buffer.add(obs, action, reward, new_obs, done)
-#         episode_timesteps += 1
-
-#     policy.train(iterations, replay_buffer, batch_size, alpha_1, discount_factor, policy_freq, tau)
-#     if t % eval_episodes == 0:
-#         print('총 epsidoe 수 : {} 평균 reward : {}'.format(t, evaluate_policy(policy, eval_episodes)))
-#     obs = new_obs
-#     env.render()
+  
+# for t in range(total_timesteps):
+#     if done:
+#         if t != 0:
+#             print(f"Total T: {t} Episode Num: {episode_num} Episode T: {episode_timesteps} Reward: {episode_reward}")
+#             policy.train(iterations, replay_buffer, batch_size, alpha_1, discount_factor, policy_freq, tau)
+        
+#         # Evaluate the policy
+#         if timesteps_since_eval >= start_timesteps:
+#             timesteps_since_eval %= start_timesteps
+#             evaluations = evaluate_policy(policy, eval_episodes)
+#             print(f"Evaluation over {eval_episodes} episodes: {evaluations}")
+        
+#         # Reset environment
+#         obs = env.reset()
+#         done = False
+#         episode_reward = 0
+#         episode_timesteps = 0
+#         episode_num += 1
     
+#     # Select action
+#     if t < start_timesteps:
+#         action = env.action_space.sample()
+#     else:
+#         action = policy.select_action(np.array(obs))
+    
+#     # Perform action
+#     new_obs, reward, done, _, _ = env.step(action)
+#     done_bool = 0 if episode_timesteps + 1 == env._max_episode_steps else float(done)
+    
+#     # Store experience in replay buffer
+#     replay_buffer.add(obs, action, reward, new_obs, done_bool)
+    
+#     # Update values
+#     obs = new_obs
+#     episode_reward += reward
+#     episode_timesteps += 1
+#     timesteps_since_eval += 1
+#     env.render()
+# print("Training finished.")
+
+# Main training loop
 for t in range(total_timesteps):
+    # Reset environment when an episode is done
     if done:
         if t != 0:
-            print(f"Total T: {t} Episode Num: {episode_num} Episode T: {episode_timesteps} Reward: {episode_reward}")
+            print(f"Episode Num: {episode_num} Reward: {episode_reward}")
             policy.train(iterations, replay_buffer, batch_size, alpha_1, discount_factor, policy_freq, tau)
-        
-        # Evaluate the policy
-        if timesteps_since_eval >= start_timesteps:
-            timesteps_since_eval %= start_timesteps
-            evaluations = evaluate_policy(policy, eval_episodes)
-            print(f"Evaluation over {eval_episodes} episodes: {evaluations}")
-        
-        # Reset environment
+            episode_num += 1
+
+            if episode_num % eval_episodes == 0:
+                avg_reward = evaluate_policy(policy, eval_episodes)
+                print(f"Average reward over {eval_episodes} episodes: {avg_reward}")
+
         obs = env.reset()
         done = False
         episode_reward = 0
         episode_timesteps = 0
-        episode_num += 1
-    
-    # Select action
+
+    # Random action for initial exploration
     if t < start_timesteps:
         action = env.action_space.sample()
     else:
         action = policy.select_action(np.array(obs))
-    
-    # Perform action
+
+    # Perform action and store the transition in the replay buffer
     new_obs, reward, done, _, _ = env.step(action)
-    done_bool = 0 if episode_timesteps + 1 == env._max_episode_steps else float(done)
-    
-    # Store experience in replay buffer
-    replay_buffer.add(obs, action, reward, new_obs, done_bool)
-    
-    # Update values
+    replay_buffer.add(obs, action, reward, new_obs, float(done))
     obs = new_obs
+
     episode_reward += reward
     episode_timesteps += 1
     timesteps_since_eval += 1
-    env.render()
-print("Training finished.")
+    

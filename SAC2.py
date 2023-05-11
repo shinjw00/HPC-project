@@ -187,7 +187,6 @@ class SAC(object):
                 # Target networks update
                 for param, target_param in zip(self.critic.parameters(), self.target_critic.parameters()):
                     target_param.data.copy_(tau * param.data + (1 - tau) * target_param.data)
-        return log_prob.mean()
 
 env = gym.make("Pendulum-v1", render_mode = 'human')
 
